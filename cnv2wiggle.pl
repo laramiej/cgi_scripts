@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 use strict;
 
+# Copyright Complete Genomics
+
 # A Very Simple CNV Variants to wig Converter and BED file generator
 
 #This script uses the cnvDetailsBeta file to create a wiggle track and the cnvSegments
