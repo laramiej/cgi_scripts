@@ -1,0 +1,3 @@
+DNAid	normal	tumor
+117-A01	/path/to/genome/GS****-DNA_A01	/path/to/genome/GS****-DNA_C01
+117-A01	/path/to/genome/GS****-DNA_A01	/path/to/genome/GS****-DNA_C01
