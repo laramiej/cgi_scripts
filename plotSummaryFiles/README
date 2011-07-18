@@ -1,0 +1,29 @@
+grapthSummaryData.R
+
+Written by:
+	Andrew R Wood
+	Genetics of Complex Traits
+	Peninsula Medical School
+	University of Exeter
+	Exeter EX1 2LU
+	United Kingdom
+	
+	Jason Laramie	jlaramie@completegenomics.com
+	Complete Genomics
+
+This script will combine summary-* files from any number of genomes and create a variety of plots across all metrics.
+
+Instructions: load source and enter top directory or a sample.list (see below) containing ALL CGI directories to be scanned for summary files
+
+The sample.list (optional) is a space delinated file that must have the column heading "dir" like and "DNA", all other columns are optional:
+#proj     DNA    cust                 ver      GB  PB   dir
+#P201   525-A01  T2DM                 1.11     37  a    /sup/sv-01/proj/p201/GS00525-DNA_A01_1110
+#P201   525-A03  T2DM                 1.11     37  a    /sup/sv-01/proj/p201/GS00525-DNA_A03_1110
+
+Example run:
+#within R
+source("graphSummaryData.R")
+graph.summary.data(sample.list="mysamples.txt")
+#or
+graph.summary.data(top_dir="/path/to/root/directory/of/genomes")
+
