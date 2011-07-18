@@ -17,8 +17,8 @@ Instructions: load source and enter top directory or a sample.list (see below) c
 
 The sample.list (optional) is a space delinated file that must have the column heading "dir" like and "DNA", all other columns are optional:
 #proj     DNA    cust                 ver      GB  PB   dir
-#P201   525-A01  T2DM                 1.11     37  a    /sup/sv-01/proj/p201/GS00525-DNA_A01_1110
-#P201   525-A03  T2DM                 1.11     37  a    /sup/sv-01/proj/p201/GS00525-DNA_A03_1110
+#P201   525-A01  XXXX                 1.11     37  a    /sup/sv-01/proj/p201/GS00525-DNA_A01_1110
+#P201   525-A03  XXXX                 1.11     37  a    /sup/sv-01/proj/p201/GS00525-DNA_A03_1110
 
 Example run:
 #within R
