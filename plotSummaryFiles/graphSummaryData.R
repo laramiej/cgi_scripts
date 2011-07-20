@@ -8,14 +8,18 @@
 # Exeter EX1 2LU
 # United Kingdom
 #
+
+#Jason Laramie
+# jlaramie@completegenomics.com
+
 # Instructions: load source and enter top directory or a sample.list (see below) containing ALL CGI directories to be scanned for summary files as the argument of the function
 ##Where sample list is a space delinated file that must have the column heading "dir" like and "DNA":
 #proj     DNA    cust                 ver      GB  PB   dir
 #P201   525-A01  T2DM                 1.11     37  a    /sup/sv-01/proj/p201/GS00525-DNA_A01_1110
 #P201   525-A03  T2DM                 1.11     37  a    /sup/sv-01/proj/p201/GS00525-DNA_A03_1110
-# Thanks to Jason Laramie at CGI for his input also.
 
-graph.summary.data <- function(top_dir, sample.list=NULL) {
+
+graph.summary.data <- function(top_dir, sample.list=NULL, assembly.version=1.12) {
     require(lattice)
     require(grid)
     file_list=NULL
@@ -43,7 +47,7 @@ graph.summary.data <- function(top_dir, sample.list=NULL) {
 
         # Generate the data frame
         print("Extracting data from summary files")
-        summary_dataframe <- funct_fill_data_frame(file_list)
+        summary_dataframe <- funct_fill_data_frame(file_list, assembly.version)
         attach(summary_dataframe)
     
         # Plot the data
@@ -112,6 +116,14 @@ graph.summary.data <- function(top_dir, sample.list=NULL) {
         funct_plot_sv(xlim,xaxis,d)
         funct_plot_sv_hists()
         funct_plot_sv_box()
+        #plot MEI data
+        if(assembly.version >= 1.12){
+        funct_plot_genome_fractions(xlim,xaxis,d)
+        	funct_plot_mei(xlim,xaxis,d)
+        }
+        
+        #find correlations among the data
+        funct_find_corr(summary_dataframe)
 
         dev.off()
         detach(summary_dataframe)
@@ -172,7 +184,7 @@ funct_sort_files <- function(file_list) {
 }
 
 
-funct_fill_data_frame <- function(file_list) {
+funct_fill_data_frame <- function(file_list, assembly.version) {
 
     summary_dataframe = NULL
 
@@ -192,8 +204,9 @@ funct_fill_data_frame <- function(file_list) {
     trans_summary_dataframe = trans_summary_dataframe[-c(1,2),]
     trans_summary_dataframe = cbind(file_indicies,file_list,trans_summary_dataframe)
     row.names(trans_summary_dataframe) <- NULL 
-
-    names(trans_summary_dataframe) = c(
+	
+	if(assembly.version==1.11){
+    	names(trans_summary_dataframe) = c(
                                      "File_Index",
                                      "File",
                                      "Gender",
@@ -273,9 +286,94 @@ funct_fill_data_frame <- function(file_list) {
                                      "SV_Total_Junction_Count", 
                                      "SV_High_Confidence_Junction_Count"
                                     )
-
-    trans_summary_dataframe[, c(4:78)] <- sapply(trans_summary_dataframe[, c(4:78)], as.numeric)
-    write.table(trans_summary_dataframe,file="summary_data_plotted.txt",sep="\t",row.names=FALSE)
+	}else if(assembly.version == 1.12){
+		names(trans_summary_dataframe) = c(
+                                     "File_Index",
+                                     "File",
+                                     "Gender",
+                                     "Genome_Fully_Called_Fraction",  
+                                     "Genome_Partially_Called_Fraction",  
+                                     "Genome_No_Called_Fraction",
+                                     "Genome_Gross_Mapping_Yield_Gb", 
+                                     "Genome_Both_Mates_Mapped_Yield_Gb", 
+                                     "Genome_100k_Normalised_Coverage_Variability",
+                                     "Genome_Fraction_WeightSumSequenceCoverage_gt_5x", 
+                                     "Genome_Fraction_WeightSumSequenceCoverage_gt_10x",
+                                     "Genome_Fraction_WeightSumSequenceCoverage_gt_20x",
+                                     "Genome_Fraction_WeightSumSequenceCoverage_gt_30x",
+                                     "Genome_Fraction_WeightSumSequenceCoverage_gt_40x",
+                                     "Exome_Fully_Called_Fraction", 
+                                     "Exome_Partially_Called_Fraction", 
+                                     "Exome_No_Called_Fraction",
+                                     "Exome_Fraction_WeightSumSequenceCoverage_gt_5x",
+                                     "Exome_Fraction_WeightSumSequenceCoverage_gt_10x",
+                                     "Exome_Fraction_WeightSumSequenceCoverage_gt_20x",
+                                     "Exome_Fraction_WeightSumSequenceCoverage_gt_30x",
+                                     "Exome_Fraction_WeightSumSequenceCoverage_gt_40x",
+                                     "Library_Mate_Distribution_Mean", 
+                                     "Library_Mate_Distribution_Range_95CI_Min", 
+                                     "Library_Mate_Distribution_Range_95CI_Max",
+                                     "Genome_var_SNP_Total_Count",
+                                     "Genome_var_SNP_Homozygous_Count",
+                                     "Genome_var_SNP_Heterozygous_Count",
+                                     "Genome_var_SNP_Novel_Fraction",
+                                     "Genome_var_SNP_Homozygous_Novel_Fraction",
+                                     "Genome_var_SNP_Heterozygous_Novel_Fraction",
+                                     "Genome_var_SNP_Het_Hom_Ratio",
+                                     "Genome_var_SNP_Transition_Transversion_Ratio",
+                                     "Genome_var_INS_Total_Count",
+                                     "Genome_var_INS_Novel_Fraction",
+                                     "Genome_var_INS_Het_Hom_Ratio",
+                                     "Genome_var_DEL_Total_Count",
+                                     "Genome_var_DEL_Novel_Fraction",
+                                     "Genome_var_DEL_Het_Hom_Ratio",
+                                     "Genome_var_SUB_Total_Count",
+                                     "Genome_var_SUB_Novel_Fraction",
+                                     "Genome_var_SUB_Het_Hom_Ratio",
+                                     "Exome_var_SNP_Total_Count",
+                                     "Exome_var_SNP_Homozygous_Count",
+                                     "Exome_var_SNP_Heterozygous_Count",
+                                     "Exome_var_SNP_Novel_Fraction",
+                                     "Exome_var_SNP_Homozygous_Novel_Fraction",
+                                     "Exome_var_SNP_Heterozygous_Novel_Fraction",
+                                     "Exome_var_SNP_Het_Hom_Ratio",
+                                     "Exome_var_SNP_Transition_Transversion_Ratio",
+                                     "Exome_var_INS_Total_Count",
+                                     "Exome_var_INS_Novel_Fraction",
+                                     "Exome_var_INS_Het_Hom_Ratio",
+                                     "Exome_var_DEL_Total_Count",
+                                     "Exome_var_DEL_Novel_Fraction",
+                                     "Exome_var_DEL_Het_Hom_Ratio",
+                                     "Exome_var_SUB_Total_Count",
+                                     "Exome_var_SUB_Novel_Fraction",
+                                     "Exome_var_SUB_Het_Hom_Ratio",
+                                     "Functional_impact_Synonymous_SNP_Loci",
+                                     "Functional_impact_Non_synonymous_SNP_Loci",
+                                     "Functional_impact_Missense_SNP_Loci",
+                                     "Functional_impact_Nonsense_SNP_Loci",
+                                     "Functional_impact_Nonstop_SNP_Loci",
+                                     "Functional_impact_Misstart_SNP_Loci",
+                                     "Functional_impact_Disrupt_SNP_Loci",
+                                     "Functional_impact_Frame_Shifting_INS_Loci", 
+                                     "Functional_impact_Frame_Shifting_DEL_Loci",
+                                     "Functional_impact_Frame_shifting_SUB_Loci", 
+                                     "Functional_impact_Frame_Preserving_INS_Loci",
+                                     "Functional_impact_Frame_Preserving_DEL_Loci", 
+                                     "Functional_impact_Frame_Preserving_SUB_Loci",
+                                     "CNV_Total_CNV_Segment_Count", 
+                                     "CNV_Total_Bases_in_CNV_Segments", 
+                                     "CNV_Fraction_Novel_by_Segment_Count",
+                                     "CNV_Fraction_Novel_by_Base_Count", 
+                                     "SV_Total_Junction_Count", 
+                                     "SV_High_Confidence_Junction_Count",
+                                     "Mobile_element_insertion_count",
+                                     "Fraction_of_novel_MEI"
+                                    )
+	}else{
+		stop(paste("Assembly version ", assembly.version, " not known",sep=""))
+	}
+    trans_summary_dataframe[, c(4:ncol(trans_summary_dataframe))] <- sapply(trans_summary_dataframe[, c(4:ncol(trans_summary_dataframe))], as.numeric)
+    write.table(trans_summary_dataframe,file="summary_data_plotted.tsv",sep="\t",row.names=FALSE)
     return(trans_summary_dataframe)
 }
 
@@ -1142,4 +1240,72 @@ funct_plot_sv_box <- function() {
     boxplot(SV_Total_Junction_Count,           main="SV Total Junction Count",            ylab="Count")
     boxplot(SV_High_Confidence_Junction_Count, main="SV High Confidence Junction Count",  ylab="Count")
 
+}
+
+funct_find_corr <- function(summary_dataframe){
+	plot.num = 0
+	for(i in 4:(ncol(summary_dataframe)-1)){
+		for(j in (i+1):ncol(summary_dataframe)){
+			#test.cor<-cor.test(summary_dataframe[,i],summary_dataframe[,j], method="pearson")
+			#test.cor<-summary(lm(summary_dataframe[,i] ~ summary_dataframe[,j]))
+			#print(summary.lm(lm(summary_dataframe[,i] ~ summary_dataframe[,j])))
+			lm.sum<-lm(summary_dataframe[,j] ~ summary_dataframe[,i])
+			p.value<-summary.lm(lm.sum)$coefficients[2,4]
+			#print(summary.lm(lm(summary_dataframe[,j] ~ summary_dataframe[,i])))
+			#print(p.value)
+			#p.value=1
+			#print(names(test.cor))
+			#if(!is.na(test.cor$p.value)){
+				if(p.value <= .05){
+					if((plot.num %% 6) == 0){
+						par(mfrow = c(3,2))
+					}
+					plot(summary_dataframe[,i],summary_dataframe[,j], xlab=names(summary_dataframe)[i], ylab=names(summary_dataframe)[j])
+					abline(lm.sum)
+					if(p.value<2e-16){
+						mtext(paste("Regression pvalue = <2e-16", sep=""))
+					}else{
+						mtext(paste("Regression pvalue = ", round(p.value,5), sep=""))
+					} 
+					plot.num = plot.num+1
+				}
+			#}		
+		}	
+	}
+}
+
+funct_plot_mei <- function(xlim,xaxis,d) {
+
+    #--Define plot titles:
+    lab.meia <- "MEI: Mobile element insertion count"
+    lab.meib <- "MEI: Fraction of novel MEI"
+
+    #--Define colours for raw data & median:
+    col.raw <- "#377EB8"
+    col.lm <- "grey20"
+    
+    #--Custom strip function:
+    my.strip <- function(which.given, which.panel, ...) {
+        strip.labels <- c(lab.meia, lab.meib)
+        panel.rect(0, 0, 1, 1, col="Grey", border=1)
+        panel.text(x=0.5, y=0.5, adj=c(0.5, 0.55), cex=0.95,lab=strip.labels[which.panel[which.given]],col="Black")
+    }
+        
+    plot<-xyplot(SV_High_Confidence_Junction_Count + SV_Total_Junction_Count ~ File_Index,
+                 scales=list(y="free", x=xaxis, rot=0), xlim=xlim,
+                 strip=my.strip, outer=TRUE, layout=c(1, 2, 1), ylab="", xlab="Subject Index",
+                 panel=function(x, y, ...) {
+                     panel.grid(h=-1, v=0)	# plot default horizontal gridlines
+                     panel.abline(v=d, col="grey90") # custom vertical gridlines
+                     panel.xyplot(x, y, ..., type="l", col=col.raw, lwd=0.5) # raw data
+                     panel.abline(h=median(y, na.rm=TRUE), lty=2, col=col.lm, lwd=1) # median value
+                 },
+                 key=list(text=list(c("Raw Data", "Median")),
+                          title=paste("MEI Data Across",length(File_Index),"Subjects"),
+                          col=c(col.raw, col.lm), lty=c(1, 2),
+                          columns=2, cex=0.95,
+                          lines=TRUE
+                 ),
+          ) 
+    print(plot)
 }
