@@ -17,13 +17,14 @@ Instructions: load source and enter top directory or a sample.list (see below) c
 
 The sample.list (optional) is a space delinated file that must have the column heading "dir" like and "DNA", all other columns are optional:
 #proj     DNA    cust                 ver      GB  PB   dir
-#P201   525-A01  XXXX                 1.11     37  a    /sup/sv-01/proj/p201/GS00525-DNA_A01_1110
-#P201   525-A03  XXXX                 1.11     37  a    /sup/sv-01/proj/p201/GS00525-DNA_A03_1110
+#XXXX   Sample1  XXXX                 1.11     37  a    /path/to/genome/root4sample1
+#XXXX   Sample2  XXXX                 1.11     37  a    /path/to/genome/root4sample2
 
 Example run:
 #within R
 source("graphSummaryData.R")
 graph.summary.data(sample.list="mysamples.txt")
+#this will graph all summary files with genomes in mysamples.txt assuming assembly version 1.12 and skipping the pairwise regression graphs
 #or
-graph.summary.data(top_dir="/path/to/root/directory/of/genomes")
-
+graph.summary.data(top_dir="/path/to/root/directory/of/genomes", assembly.version=1.11, test.pairwise=T)
+this will graph all summary files with genomes in the directory "/path/to/root/directory/of/genomes" assuming assembly version 1.11 and running the pairwise regression.
