@@ -4,6 +4,14 @@ use Getopt::Long;
 
 # Copyright Complete Genomics 2011. Author: Jason Laramie 
 
+=head1 SYNOPSYS
+
+ cnv2wiggle.pl [arguments] <detailsfile> <segmentsfile>
+
+        -h, --help                      print help message
+        -t, --tumor                     flag input files as tumor data
+        -c, --chromosome=[all]          specify a chromosome to process, default all chromosomes
+
 =head1 NAME
 
 cnv2wiggle.pl
@@ -22,13 +30,13 @@ my ($help, $chrm, $tumor);
 #   parameter or help option is passed
 
 usage() if ( @ARGV < 1 or
-			! GetOptions('help|?' => \$help, 'tumor|t' => \$tumor, 'chromosome|c=s' => \$chrm)
+			! GetOptions('help|h' => \$help, 'tumor|t' => \$tumor, 'chromosome|c=s' => \$chrm)
 			or defined $help );
  
 sub usage
 {
   print "Unknown option: @_\n" if ( @_ );
-  print "usage: cnv2wiggle.pl [--tumor|-t] [--chrm|-c all] [--help|-?] cnv[Tumor]DetailsBeta-*-ASM cnv[Tumor]SegmentsBeta-*-ASM \n";
+  print "usage: cnv2wiggle.pl [--tumor|-t] [--chrm|-c all] [--help|-h] cnv[Tumor]DetailsBeta-*-ASM cnv[Tumor]SegmentsBeta-*-ASM \n";
   exit;
 }
 
