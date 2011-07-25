@@ -15,11 +15,11 @@
 # Instructions: load source and enter top directory or a sample.list (see below) containing ALL CGI directories to be scanned for summary files as the argument of the function
 ##Where sample list is a space delinated file that must have the column heading "dir" like and "DNA":
 #proj     DNA    cust                 ver      GB  PB   dir
-#P201   525-A01  T2DM                 1.11     37  a    /sup/sv-01/proj/p201/GS00525-DNA_A01_1110
-#P201   525-A03  T2DM                 1.11     37  a    /sup/sv-01/proj/p201/GS00525-DNA_A03_1110
+#XXXX   Sample1  XXXX                 1.11     37  a    /path/to/genome/root4sample1
+#XXXX   Sample2  XXXX                 1.11     37  a    /path/to/genome/root4sample2
 
 
-graph.summary.data <- function(top_dir, sample.list=NULL, assembly.version=1.12) {
+graph.summary.data <- function(top_dir, sample.list=NULL, assembly.version=1.12, test.pairwise=F) {
     require(lattice)
     require(grid)
     file_list=NULL
@@ -123,8 +123,9 @@ graph.summary.data <- function(top_dir, sample.list=NULL, assembly.version=1.12)
         }
         
         #find correlations among the data
-        funct_find_corr(summary_dataframe)
-
+        if(test.pairwise){
+        	funct_find_corr(summary_dataframe)
+        }
         dev.off()
         detach(summary_dataframe)
     }
