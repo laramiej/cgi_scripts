@@ -56,12 +56,6 @@ die usage("--chrm|-c must be a chromosome name or the word 'all'\n")
 my $fileDetails=    $ARGV[0]; #for the wiggle plots
 my $fileSegments=    $ARGV[1]; #for the bed track
 
-#if ($tumor) {
-#  print "Tumor data, chrm=$chrm, $fileDetails, $fileSegments\n";
-#} else {
-#  print "Non-Tumor data, chrm=$chrm, $fileDetails, $fileSegments\n";
-#}
-
 # open file
 if ($fileDetails=~/\.gz$/) { # if it ends with .gz
     open (FILE,"zcat $fileDetails |")  || die "can't open 'zcat $fileDetails'";
@@ -80,7 +74,6 @@ open(BED, ">$bedFile") or die "Can't open $bedFile\n";
 open(BEDGENE, ">$bedFileGene") or die "Can't open $bedFileGene\n";
 
 # Levels for tumor data
-
 #MEAN_LEVEL_0   0.046
 #MEAN_LEVEL_1   0.498
 #MEAN_LEVEL_2   0.989
@@ -88,19 +81,31 @@ open(BEDGENE, ">$bedFileGene") or die "Can't open $bedFileGene\n";
 #MEAN_LEVEL_4   1.945
 #MEAN_LEVEL_5   3.212
 
-%tumor_levels = ( "MEAN_LEVEL_0"  => [0,"255,255,255"] ,
-                  "MEAN_LEVEL_1"  => [0,"255,255,255"] ,
-                  "MEAN_LEVEL_2"  => [0,"255,255,255"] ,
-                  "MEAN_LEVEL_3"  => [0,"255,255,255"] ,
-                  "MEAN_LEVEL_4"  => [0,"255,255,255"] ,
-                  "MEAN_LEVEL_5"  => [0,"255,255,255"] ,
-                  "MEAN_LEVEL_6"  => [0,"255,255,255"] ,
-                ) ;
+my @level_colors = ("37,151,248",
+                    "43,63,246",
+                    "115,49,244",
+                    "201,55,242",
+                    "241,61,201",
+                    "239,67,125",
+                    "238,89,73");
+my %tumor_levels;
 
 # read var file until we get to a line which starts with >
+# Parse out the tumor levels
 while (<FILE>) {
-
-    last if (/^\>/);
+  if ($tumor) {
+    chomp;
+    if (m/^#/) {
+      if (m/^#MEAN_LEVEL.*/) {
+        my @line= split(/\t/);
+        my $tmp = substr $line[0], 1;
+        my @t_level = split(/_/, $tmp);
+        #$tumor_levels{$t_level[2]} = [$line[1], $level_colors[$t_level[2]]];
+        $tumor_levels{$line[1]} = $level_colors[$t_level[2]];
+      }
+    }
+  }
+  last if (/^\>/);
 }
 
 # print header line for BED file
@@ -119,6 +124,12 @@ print BED "track name=$name itemRgb=On\n";
 #chr1    5000    112.8   125.6   0.10    1.68    N       hypervariable   0       0
 #chr1    7000    122.8   124.9   0.14    1.83    N       hypervariable   0       0
 #
+
+
+#
+#>chr	position	avgNormalizedCvg	gcCorrectedCvg	fractionUnique	relativeCvg	calledLevel	calledCNVType	levelScore	CNVTypeScore
+#chr1	50000	41.6	52.6	0.03	0.96	0.989	NA	62	NA
+
 print "Parsing $fileDetails to make the wiggle track...\n";
 my $WIG;
 if($chrm eq "all"){
@@ -178,7 +189,7 @@ if ($fileSegments=~/\.gz$/) { # if it ends with .gz
 }
 
 while (<FILE>) {
-    last if (/^\>/);
+  last if (/^\>/);
 }
 
 # read loci
@@ -186,27 +197,39 @@ print "Parsing $fileSegments to make the BED track\n";
 while (<FILE>) {
 	chomp;
 	my @line= split(/\t/);
-		if($line[5] ne "N" && $line[6] ne "="){
+	if ($tumor) {
+		#chrom,chromStart,chromEnd,name,score,strand,thickStart,thickEnd,itemRgb
+		print BED "$line[0]\t$line[1]\t$line[2]\t$line[5]\t$line[7]\t+\t$line[1]\t$line[2]\t";
+		print BED $tumor_levels{$line[5]} . "\n";
+		#print BED "0,0,0\n";
+	} else {
+
+  		if ($line[5] ne "N" && $line[6] ne "=") {
 			print BED "$line[0]\t$line[1]\t$line[2]\t$line[5]\t$line[8]\t+\t$line[1]\t$line[2]\t";
-   			if($line[6] eq "+"){
-    	 		print BED "0,255,0\n";
-    		}elsif($line[6] eq "-"){
-    			print BED "255,0,0\n";
-    		}else{
-    			print BED "0,0,0\n";
-    		}
+
+			if ($line[6] eq "+") {
+   				print BED "0,255,0\n";
+   			} elsif($line[6] eq "-") {
+	   			print BED "255,0,0\n";
+   			} else {
+   				print BED "0,0,0\n";
+	   		}	
 		}
-		if($line[5] ne "N" && $line[6] ne "=" && $line[9]){ #only want those segements that overlap a gene
+
+ 		if ($line[5] ne "N" && $line[6] ne "=" && $line[9]){ #only want those segements that overlap a gene
 			print BEDGENE "$line[0]\t$line[1]\t$line[2]\t$line[5]\t$line[8]\t+\t$line[1]\t$line[2]\t";
-   			if($line[6] eq "+"){
-    	 		print BEDGENE "0,255,0\n";
-    		}elsif($line[6] eq "-"){
-    			print BEDGENE "255,0,0\n";
-    	}else{
-    		print BEDGENE "0,0,0\n";
-    	}
-	}		
+
+			if ($line[6] eq "+") {
+   		 		print BEDGENE "0,255,0\n";
+   			} elsif($line[6] eq "-"){
+	   			print BEDGENE "255,0,0\n";
+		   	} else {
+   				print BEDGENE "0,0,0\n";
+		   	}
+		}
+	}
 }
+
 close BED;
 close BEDGENE;
 close FILE;
