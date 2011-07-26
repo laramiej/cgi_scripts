@@ -1,0 +1,6 @@
+#!/bin/tcsh
+
+set j1=1153
+set j2=3719
+set chr=chr1
+set beg=209934007
