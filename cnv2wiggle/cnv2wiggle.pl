@@ -100,7 +100,6 @@ while (<FILE>) {
         my @line= split(/\t/);
         my $tmp = substr $line[0], 1;
         my @t_level = split(/_/, $tmp);
-        #$tumor_levels{$t_level[2]} = [$line[1], $level_colors[$t_level[2]]];
         $tumor_levels{$line[1]} = $level_colors[$t_level[2]];
       }
     }
