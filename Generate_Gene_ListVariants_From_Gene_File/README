@@ -1,1 +1,25 @@
-TBD
+Generate Gene List from Gene File
+
+Takes a list of gene files
+Extracts var entries that affect coding or splicing
+Removes index, locus and allele fields (ie genome specific fields)
+Creates a non-redundant list of these vars
+Adds a count of how many times each var occurs in the gene files
+
+Usage:
+perl Generate_Gene_ListVariants_From_Gene_File \
+--Input_File input_file_1 \
+--Input_File input_file_2 \
+...
+--Input_File input_file_n \
+--Output_Dir output_dir \
+--Output_File filename \
+
+eg
+
+perl /Users/rtearle/Documents/Programming/Perl/Scripts/Dev/Generate_Gene_ListVariants_From_Gene_File_0_1_4.pl \
+--Input_File /Yoruban_Trio_1100_37/GS19238-1100-37/GS00028-DNA_A01/ASM/gene-GS19238-1100-37-ASM.tsv.bz2 \
+--Input_File /Yoruban_Trio_1100_37/GS19239-1100-37/GS00028-DNA_B01/ASM/gene-GS19239-1100-37-ASM.tsv.bz2 \
+--Input_File /Yoruban_Trio_1100_37/GS19240-1100-37/GS00028-DNA_C01/ASM/gene-GS19240-1100-37-ASM.tsv.bz2 \
+--Output_Dir /rtearle/Yoruban_Trio/ \
+--Output_File YRI_Trio_Protein_Coding_Variants.tsv \
