@@ -12,10 +12,10 @@ script doesn't include hypervariable regions.
 
 How to run: see perldoc cnv2wiggle.pl
 
-details about the formatting of a wig track can be found here:
+Details about the formatting of a wig track can be found here:
 	http://www.broadinstitute.org/software/igv/WIG
 
-details about the formatting of a bed track can be found here:
+Details about the formatting of a bed track can be found here:
 	http://www.broadinstitute.org/software/igv/BED
 
 
