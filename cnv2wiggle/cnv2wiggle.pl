@@ -4,6 +4,10 @@ use Getopt::Long;
 
 # Copyright Complete Genomics 2011. Author: Jason Laramie 
 
+=head1 NAME
+
+cnv2wiggle.pl
+
 =head1 SYNOPSYS
 
  cnv2wiggle.pl [arguments] <detailsfile> <segmentsfile>
@@ -11,10 +15,6 @@ use Getopt::Long;
         -h, --help                      print help message
         -t, --tumor                     flag input files as tumor data
         -c, --chromosome=[all]          specify a chromosome to process, default all chromosomes
-
-=head1 NAME
-
-cnv2wiggle.pl
 
 =head1 DESCRIPTION
 
