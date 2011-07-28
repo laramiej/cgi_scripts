@@ -1,17 +1,16 @@
+A Very Simple CNV Variants to wig Converter and BED file generator
+
 Author: Jason M Laramie
 
-cnv2wiggle.pl  will create a bed track for ploidy segments different from 2 and a wiggle plot of the relative coverage.  These files can be opened in IGV.  This script doesn't include hypervariable regions.
+cnv2wiggle.pl will create a bed track for ploidy segments different from 2 and a 
+wiggle plot of the relative coverage.  These files can be opened in IGV.  This 
+script doesn't include hypervariable regions.
 
-# A Very Simple CNV Variants to wig Converter and BED file generator
 
-#This script uses the cnvDetailsBeta file to create a wiggle track and the cnvSegments file to create a BED track.
+#This script uses the cnvDetailsBeta file to create a wiggle track and the 
+#cnvSegments file to create a BED track.
 
-How to run:
-perl cnv2wiggle.pl cnvDetailsBeta-*-ASM cnvSegmentsBeta-*-ASM chromosome sampleId
-     where cnvDetailsBeta-*-ASM is the CNVdetails file from CG
-     	   and cnvSegmentsBeta-*-ASM is the cnvSegments file from CG
-	   chromosome can be a specific chromosome name (e.g. chr1 or chrX) or the word 'all' to process all chromosomes
-	   sampleId is the name the created tracks will be given
+How to run: see perldoc cnv2wiggle.pl
 
 details about the formatting of a wig track can be found here:
 	http://www.broadinstitute.org/software/igv/WIG
