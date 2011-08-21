@@ -1,0 +1,24 @@
+Rick_ListVariants
+
+Takes as input a list of var files
+Extracts a non-redundant set of variations
+Adds a count of how many times each variation occurs in the var files [optional]
+Unlike cgatools listvariants, does not attempt to canonicalise the variants
+So the same variation in different forms across genomes will remain entered as different variations
+
+perl prog file(s) [flag] filename
+ie
+perl Rick_ListVariants \
+ --Input_File varfile_1 \
+ --Input_File varfile_2 \
+ ...
+ --Input_File varfile_n \
+ --Export_Counts \ [optional, no value to be entered]
+ --Output_File filename
+eg
+perl /Users/rtearle/Documents/Programming/Perl/Scripts/Dev/Rick_ListVariants_0_0_1.pl \
+--Input_File /Yoruban_Trio_1100_37/var-GS19238-1100-37-ASM.tsv.bz2 \
+--Input_File /Yoruban_Trio_1100_37/var-GS19239-1100-37-ASM.tsv.bz2 \
+--Input_File /Yoruban_Trio_1100_37/var-GS19240-1100-37-ASM.tsv.bz2 \
+--Export_Counts \
+--Output_File /TBF/YRI_Trio_ListVariants.tsv
