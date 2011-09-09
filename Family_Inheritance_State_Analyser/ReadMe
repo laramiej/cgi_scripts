@@ -1,0 +1,51 @@
+Family_Inheritqnce_State_Analyser
+From parental genotype data, detemine which genotypes can be assigned unambiguously (usually aa/ab)
+[Not analysing haploids at the moment]
+For these aa/ab parental genotypes, look at child inheritance patterns
+From aa/ab, children can be aa or ab ie can be the same or different to each other
+This pattern should be stable in blocks, which will reflect recombination events
+This block information can be used to look for variants which are the same or different in the children
+
+Looking at parental genotyes:
+aa/bb and aa/aa are uninformative
+The following are MIEs:
+aa/aa giving ab or bb in a child is MIE unexpected allele
+aa/bb for aa or bb, in a child as MIE impossible combination
+aa/ab for bb, in a child as MIE impossible combination
+aa/ab potentially informative for state inheritance
+
+input is a testvariants results file
+
+Flow
+1. Take output of listvariants/testvariants
+2. For all loci, check whether the childrens' genotypes can arise from the parents' genotypes
+3. Remove those loci which are discordant ie MIEs
+4. Mark loci where one parent is aa (or a) and other is ab (or b) ie potentially informative
+5. For these loci, are the children are identical (S) or not (D) for the informative allele
+4. Mark loci where one both parents are ab ie potentially informative
+6. For these loci are the children identical (S) for the informative allele
+7. Save informative aa/ab and ab/ab loci
+8. Concatenate blocks of loci with the same state
+9. Remove singleton loci and concatenate state blocks again
+10. Mark blocks of short runs (user defined) as having an uncertain state (U)
+11. Mark gaps between states (G)
+
+To Do: extend to start and end of chromosomes (ie begin and end of called chrs)
+
+Format:
+perl prog file dir nr nr nr [nr]
+ie
+perl Family_Inheritance_State_Analyser \
+--Input input_file \
+--Output_Dir output_dir \
+--Mat_Field mat_field_nr \
+--Pat_Field pat_field_nr \
+--Child_Fields child_field_nr [child_field_nr] \
+--Short_Block nr
+eg
+perl /perl/Family_Inheritance_State_Analyser_0_7_1.pl \
+--Input /data/Family_Quartet_testvariants.tsv \
+--Output_Dir /data/ \
+--Mat_Field 8  --Pat_Field 9  --Child_Fields 10 11  --Short_Block 5 \
+
+Rick Tearle 2010-11
