@@ -1,0 +1,35 @@
+var_to_Reads
+Takes a nominated chr & range, extracts related information from assembly files
+Assembles reads from evidence files if they exist
+
+Format:
+perl prog dir dir chr range file
+ie
+perl var_to_Reads.pl \
+ --Input_Dir assembly_dir \
+ --Output_Dir dir_path \
+ --Chromosome chr \
+ --Range n1-n2 \
+ --Reference ref.crr
+eg
+perl /rnd/home/rtearle/perl/var_to_Reads_1_6_3.pl \
+ --Input_Dir /GS19240-1100-37-ASM/GS00028-DNA_C01 \
+ --Output_Dir /rtearle/data/ \
+ --Chromosome chr1 \
+ --Range 104206533-104206534 \
+ --Reference /ref/build37.crr
+
+Note that the range separator can be anything as long as it is not a number or a tab
+But it must be of the form integer separator integer (with no spaces)
+
+The range can encompass more than one interval, with the intervals aligned and printed separately
+Includes a base count for each base per position, for each allele
+
+Flow:
+Starts with chr and pos
+Reports entries for this chr and surrounding posns from CoverageRefScore file
+Reports entries for this chr and pos from var, masterVar and gene files
+Reports evInt entry covering this chr and pos from evInt file
+Reports evidence read entries from evDNB file
+Aligns the evidence reads, providing untabbed and tabbed output
+Counts and reports the bases for each pos for each allele
