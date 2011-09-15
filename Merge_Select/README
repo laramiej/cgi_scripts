@@ -9,22 +9,22 @@ perl Merge_Select \
 --Input_FileA input_file_1 \
 --Input_FileB input_file_2 \
 --Output_File file \
---Select all|matched|unmatched
---Match fieldname_in_fileA:fieldname_in_FileB [repeated]
---Remove_Dup_Fields [param can be present or absent]
---Output_Fields A.*,B.* [or eg A.fieldname1,A.fieldname2,B.fieldname1 etc]
+--Match fieldname_in_fileA:fieldname_in_FileB [optionally repeated]
+--Select all|matched|unmatched [optional, default is all]
+--Remove_Dup_Fields [optional, default is absent = no]
+--Output_Fields A.*,B.* [or eg A.fieldname1,A.fieldname2,B.fieldname1 etc; optional, default is A.*,B.*]
 
 eg
 perl /Perl_Scripts/Merge_Select_0_0_1.pl \
  --Input_FileA /CEPH_Family_3Gen_Dominant_1/CEPH_Family-MGM_F_S1-Het_Het_Het-Coding-Protein_Affecting.tsv \
  --Input_FileB  /CG_Public_Genomes/Public_Genomes_Unrelated_50-testvariants.tsv_Freq_Short.tsv.bz2 \
  --Output_File /Users/rtearle/CEPH_Family-MGM_F_S1-Het_Het_Het-Coding-Protein_Affecting-54Freq_No.tsv \
- --Select all
  --Match chromosome:chromosome
  --Match begin:begin
  --Match end:end
  --Match varType:varType \
  --Match alleleSeq:alleleSeq \
+ --Select all
  --Remove_Dup_Fields
  --Output_Fields A.*,B.*
  
@@ -36,4 +36,14 @@ Duplicate fields are removed from the output [--Remove_Dup_Fields].
 All of the fields of the first file, along with all the (non-duplicate) fields of the second file, are outputted [--Output_Fields A.*,B.*].
 This output file can then be filtered based on the frequency of the family variants in the 50 genome dataset, to identify rare variants.
 [Alternatively, if the user wanted variants not present in the 50 genomes, they could set the Select flag to unmatched.]
+
+Note that script only keeps the first match.
+Investigating keeping all matches - will update when working.
+
+Note that if there is a header present, script assumes header it is of the standard Complete Genomics form:
+header lines starting with #, 
+one empty line,
+column header starting with >.
+If a header of line(s) starting with # is not found, the first line is assumed to be the column header.
+
 

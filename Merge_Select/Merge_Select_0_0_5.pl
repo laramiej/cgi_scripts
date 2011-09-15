@@ -5,8 +5,6 @@ $| = 1;
 #use feature "state";
 my $Debug = 0;
 
-# Version 0_0_3
-
 # Merge 2 files based on matching fields
 # Select matched, unmatched or all records of file A to output
 # Choose whether to output fields present in both files (duplicate fields)
@@ -22,7 +20,7 @@ my $Debug = 0;
 # --Output_Fields A.*,B.* [or eg A.fieldname1,A.fieldname2,B.fieldname1 etc]
 
 # eg
-# perl /Users/rtearle/Documents/Programming/Perl/Scripts/Dev/Merge_Select.pl \
+# perl /Users/rtearle/Documents/Programming/Perl/Scripts/Dev/Merge_Select_0_0_1.pl \
 # --Input_FileA /Users/rtearle/Documents/Scratch/CEPH_Family_3Gen_Dominant_1/CEPH_Family-MGM_F_V_C1-Het_Het_Het-Coding-Protein_Affecting-Edited.tsv \
 # --Input_FileB  /Users/rtearle/Documents/TBF/CG_Public_Genomes/54_Genomes/Public_Genomes_Unrelated_54-testvariants.tsv_Freq_Short.tsv.bz2 \ \
 # --Output_File /Users/rtearle/Documents/TBF/ \
@@ -48,15 +46,15 @@ TestParameters (%EnteredParams); # compares expectd and entered params
 
 # Assigning input params
 # Input Files
-my $FileA = $EnteredParams{Input_FileA}; # ptr to list of input files
+my $FileA = $EnteredParams{input_filea}; # ptr to list of input files
 unless (-f $FileA) {die "Input file $FileA not found\n";} # requires existing files
-my $FileB = $EnteredParams{Input_FileB}; # ptr to list of input files
+my $FileB = $EnteredParams{input_fileb}; # ptr to list of input files
 unless (-f $FileB) {die "Input file $FileB not found\n";} # requires existing files
 # Ouput File
-my $FileOut = $EnteredParams{Output_File}; # output file
+my $FileOut = $EnteredParams{output_file}; # output file
 if (-f $FileOut) # ouput file exists, create a new one based on the name
 {
-	print "Output file $FileOut exists, modifying to unique file name ";
+	print "Output file $FileOut exists\nModifying to unique file name ";
 	$FileOut =~ /^(.+?)\./; my $Stub = $1; # set stub to name without extensions
 	$FileOut =~ /(\..+)?$/; my $Ext = $1; # set ext to extensions
 	my $n = 1; # n will increment to find a unique name
@@ -67,26 +65,26 @@ if (-f $FileOut) # ouput file exists, create a new one based on the name
 }
 # Match fields
 my %MatchFields;
-foreach my $Val (@{$EnteredParams{Match}})
+foreach my $Val (@{$EnteredParams{match}})
 {
 	$Val =~ /(.+):(.+)/; # split entry based on :
 	unless ($1 and $2) {die "Field names to match must be of the form name:name; entry $Val not valid\n";}
 	$MatchFields{$1} = $2; # make a hash with first part, second part from match entry
 }
 my $NrMatchFields = int %MatchFields;
-# Select
-my $Select = $EnteredParams{Select}; # can output all|merged|unmerged
+# Select - can output all|merged|unmerged
+my $Select = $EnteredParams{select} || $ExpectedParams{select}; # entered param or default expected param
 unless ($Select =~ /^(all|matched|unmatched)$/) {die "You must choose to output all, matched or unmatched records from file A";}
-# Remove Duplicate Fields ie if file B has fields already in file A
-my $RemoveDupFields = $EnteredParams{Remove_Dup_Fields}; # remove dup fields in B?
-#if ($RemoveDupFields and $RemoveDupFields !~ /^(A|B)$/) {die "If you must choose to remove duplicate fields you must select either A or B to remove; entry $RemoveDupFields not valid\n";}
-my $OuputFieldString = $EnteredParams{Output_Fields}; # can output all|merged|unmerged
+# Remove Duplicate Fields (ie if file B has fields already in file A)
+my $RemoveDupFields = $EnteredParams{remove_dup_fields} || $ExpectedParams{remove_dup_fields}; # entered param or default expected param
+# Output Fields - choose fields to output by name
+my $OuputFieldString = $EnteredParams{output_fields} || $ExpectedParams{output_fields}; # entered param or default expected param
 
 print "Input Files:\n\t$FileA\n\t$FileB\n";
 print "Ouput File: $FileOut\n";
 print "Match Fields: \n"; foreach my $Field (keys %MatchFields) {print "\t$Field $MatchFields{$Field}\n";};
 print "Records to output: $Select\n";
-print "Remove duplicate fields: ";{$RemoveDupFields == 1 ? print "true" : print "false"}; print "\n";
+print "Remove duplicate fields: ";{$RemoveDupFields == 1 ? print "yes" : print "no"}; print "\n";
 
 # Loading chr nrs, setting up var hash
 my @ChrNames = ('chr1', 'chr2', 'chr3', 'chr4', 'chr5', 'chr6', 'chr7', 'chr8', 'chr9', 'chr10',
@@ -105,7 +103,7 @@ my $IN_B = GetFieldNames ($FileB, $FieldsB, $StartCharB);
 my $ChrFieldNrA = FindFieldNrByName ($FieldsA, "chr|chrom|chromosome"); # field nr containing chr
 if ($ChrFieldNrA == -1) {die "Cannot find a chr field called 'chr', 'chrom' or 'chromosome' in file $FileA\n";}
 my $ChrFieldNrB = FindFieldNrByName ($FieldsB, "chr|chrom|chromosome"); # field nr containing chr
-if ($ChrFieldNrB == -1) {die "Cannot find a chr field called 'chr', 'chrom' or 'chromosome' in file $FileA\n";}
+if ($ChrFieldNrB == -1) {die "Cannot find a chr field called 'chr', 'chrom' or 'chromosome' in file $FileB\n";}
 my $BeginFieldNrA = FindFieldNrByName ($FieldsA, "begin|offset"); # field nr containing chr
 if ($ChrFieldNrA == -1) {die "Cannot find a begin field called 'begin', or 'offset' in file $FileA\n";}
 my $EndFieldNrA = FindFieldNrByName ($FieldsA, "end"); # field nr containing chr
@@ -142,7 +140,7 @@ while (<$IN_A>) # loop through recs
 }
 
 # Process File B
-print "\nComparing to file $FileB\n";
+print "Comparing to file $FileB\n";
 while (<$IN_B>) # loop through recs
 {
 	chomp (my $Rec = $_); # assign rec, remove trailing return (use rec througout loop)
@@ -162,14 +160,14 @@ while (<$IN_B>) # loop through recs
 		# add file B fields to file A rec $OutputFields
 		my $PA = $FileARecs{$Fields[$ChrFieldNrB]}->{$Key}; # ptr to hash entry for this rec,
 		$PA->{rec} = BuildOuputString($PA->{rec}, $Rec, $OutputFields);
-		print "\n\nIn FileB: key: $Key\nFile A: $PA->{rec}\nFileB: $Rec\n if $Debug"; #exit;
+		#print "\n\nIn FileB: key: $Key\nFile A: $PA->{rec}\nFileB: $Rec\n if $Debug"; #exit;
 	}
 }
 
 # Select and print desired recs
 open my $OUT, ">", $FileOut; # open output file
 my $TabsForFieldsB = "\t" x (int(@$FieldsB)-1); # to add tabs for fields B to unmatched recs
-my %Class = {"M" => 0, "N" => 0, "A" => 0, "MP" => 0, "NAP" => 0, "NUP" => 0};
+#my %Class = {"M" => 0, "N" => 0, "A" => 0, "MP" => 0, "NAP" => 0, "NUP" => 0};
 
 # Output header
 print $OUT BuildOuputString(join("\t",@$FieldsA), join("\t",@$FieldsB), $OutputFields)."\n";
@@ -179,41 +177,41 @@ foreach my $Chr (@ChrNames)
 	#print "$FileARecs{$Chr}\n";
 	foreach my $Key (sort {SortStringsasArrays ($FileARecs{$Chr}, $a, $b)} keys %{$FileARecs{$Chr}}) # using sub to sort on being, end fields)
 	{
-		$Class{A}++;
+		#$Class{A}++;
 		#print "$Chr\n";
-		print "In compare: Key: $Key\nRec: $FileARecs{$Chr}->{$Key}->{rec}\nmatch: $FileARecs{$Chr}->{$Key}->{match}\n\n" if $Debug;
+		#print "In compare: Key: $Key\nRec: $FileARecs{$Chr}->{$Key}->{rec}\nmatch: $FileARecs{$Chr}->{$Key}->{match}\n\n" if $Debug;
 		if ($FileARecs{$Chr}->{$Key}->{match}) # rec is matched, so has already been processed
 		{
-			$Class{M}++;
+			#$Class{M}++;
 			if ($Select eq "all" or $Select eq "matched") # want all or matched
 			{
 				print $OUT $FileARecs{$Chr}->{$Key}->{rec},"\n";
-				$Class{MP}++;
+				#$Class{MP}++;
 				#$Class{PA}++;
 			}
 		}
 		else # rec is not matched
 		{
-			$Class{N}++;
+			#$Class{N}++;
 			if ($Select eq "all") # want all
 			{
 				$FileARecs{$Chr}->{$Key}->{rec} = BuildOuputString($FileARecs{$Chr}->{$Key}->{rec}, "", $OutputFields); # get selected fields for rec from file A, no fiels for B as not matched
 				print $OUT $FileARecs{$Chr}->{$Key}->{rec},$TabsForFieldsB,"\n"; # adding empty fields for file B, as no match
-				$Class{UAP}++;
+				#$Class{UAP}++;
 			}
 			elsif ($Select eq "unmatched") # want unmatched
 			{
 				$FileARecs{$Chr}->{$Key}->{rec} = BuildOuputString($FileARecs{$Chr}->{$Key}->{rec}, "", $OutputFields); # get selected fields for rec from file A, no fiels for B as not matched
 				print $OUT $FileARecs{$Chr}->{$Key}->{rec},"\n"; # just fields of A in output
 				#$Class{PA}++;
-				$Class{UUP}++;
+				#$Class{UUP}++;
 
 			}
 		}
 	}
 }
 
-foreach my $Class (keys %Class) {print "$Class\t$Class{$Class}\n";}
+#foreach my $Class (keys %Class) {print "$Class\t$Class{$Class}\n";}
 
 ###########################################################################
 #                                   SUBS                                  #
@@ -223,13 +221,13 @@ sub GetExpectedParams
 {
 	my %Hash = # hash to store expected params
 	(
-		"Input_FileA" => -1,
-		"Input_FileB" => -1,
-		"Output_File" => -1,
-		"Select" => -1,
-		"Match" => [],
-		"Remove_Dup_Fields" => 0,
-		"Output_Fields" => "A.*,B.*",
+		input_filea => "",
+		input_fileb => "",
+		output_file => "",
+		match => [],
+		select => "all", # optional
+		remove_dup_fields => 0, # optional
+		output_fields => "A.*,B.*", # optional
 	);
 	$NrParams = int keys %Hash;
 	return %Hash;
@@ -245,11 +243,12 @@ sub GetEnteredParams
 		$ARGVs[$n] =~ s/\s+$//; # remove any trailing spaces
 		chomp ($ARGVs[$n]);
 		my ($Key, $Val) = split / /, $ARGVs[$n], 2; # put first element into key, any other elements into val
-		if ($Key eq "Match") # multiple entries expected, setting up array
+		$Key = lc $Key; # lower case
+		if ($Key eq "match") # multiple entries expected, setting up array
 		{
 			push @{$Hash{$Key}}, $Val; # add input to input hash
 		}
-		elsif ($Key eq "Remove_Dup_Fields") # multiple entries expected, setting up array
+		elsif ($Key eq "remove_dup_fields") #
 		{
 			$Hash{$Key} = 1; # set it to true
 		}
@@ -267,10 +266,15 @@ sub TestParameters
 	my $ArgErrors = 0;
 	foreach my $ExpArg (keys %ExpectedParams)
 	{
-		if (!defined $EnteredParams{$ExpArg}) #  if there is no entry for this expected param
-		{print "Parameter --$ExpArg appears to be missing from arguments\n"; $ArgErrors++;}
-		elsif ($EnteredParams{$ExpArg} == -1) # if no entry has been entered from the input list
-		{print "No value for parameter --$ExpArg in arguments"; $ArgErrors++;}
+		if ($ExpArg =~ /remove_dup_fields|output_fields|select/) # optional fields
+		{
+			next;
+		}
+		# required fields are input_filea input_fileb output_file match
+		elsif (!defined $EnteredParams{$ExpArg}) #  if there is no entry for this expected param
+			{print "Parameter --$ExpArg appears to be missing from arguments\n"; $ArgErrors++;}
+		elsif (! $EnteredParams{$ExpArg}) # if no entry has been entered from the input list
+			{print "No value for parameter --$ExpArg in arguments"; $ArgErrors++;}
 	}
 	if (int keys %EnteredParams > $NrParams) {die "There are too many parameter in the arguments";} # die if too many params
 	if ($ArgErrors) {die "$ArgErrors detected in input parameters";} # die if a param not entered
@@ -288,7 +292,7 @@ sub GetFieldNames
 
 	if ($Header) # is a CG file
 	{
-		my $ColHeader = <$IN>; # get col header, is next line
+		$ColHeader = <$IN>; # get col header, is next line
 	}
 	else # not a CG file
 	{
@@ -538,6 +542,7 @@ sub FindFieldNrByName
 	my $Fields = shift;
 	my $SearchString = shift;
 
+	#print "$SearchString\t$Fields\t",join(" ",@$Fields),"\n"; sleep 1;
 	for my $n (0..int(@$Fields)-1)
 	{
 		#print "$n\t$$Fields[$n]\n"; sleep 1;
