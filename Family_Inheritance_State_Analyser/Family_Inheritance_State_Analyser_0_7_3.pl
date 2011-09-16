@@ -60,21 +60,11 @@ $| = 1;
 # variantId chromosome begin end varType reference alleleSeq xRef GS000000XX1-ASM GS000000XX2-ASM [GS000000XXN-ASM] .... sum0 sum1 [sumN]
 my $Time -= time; # start time
 my $ScriptName = basename ($0); # get script name
-my $Red = "255,0,0"; # red
-my $Blue = "0,0,255"; # blue
-my $Green = "0,255,0"; # green
-my $Purple = "255,0,255"; # purple
-my $PaleBlue = "150,150,255"; # pale blue
-my $Grey = "150,150,150"; # grey
-my $PaleGrey = "50,50,50"; # pale grey
-my $SameClr = $Red; # S = red
-my $DiffClr = $Blue; # D = blue
-my $UncertClr = $Grey; # U = grey
-my $GapClr = $Purple; # G = purple
 my $Length2Ignore = 1000; # not used at the moment
 my $MIEBlockWindow = 1_000_000; # for binning MIEs
 my $GapNot2Cross = 1_000_000;
 my $Debug = 0;
+my %Colours = SetColours ();
 
 # Parsing and storing input parameters
 # Only childfields can be repeated
@@ -97,17 +87,19 @@ my @ChildFields = split / /, $EnteredParams{child_fields};
 my $NrChildren = int @ChildFields;
 if ($NrChildren == 0) {die "Need nr of field containing at least one child's genome data\n";}
 elsif ($NrChildren == 1) {print "Only 1 field containing a child's genome data provided\nWill only calculate MIEs\n";}
-my $ShortBlock = $EnteredParams{short_block};
+my $ShortBlock = $EnteredParams{short_block} || $ExpectedParams{short_block};
 if ($ShortBlock != int $ShortBlock) {die "Length of block to resolve must be an integer, not $ShortBlock\n";}
 elsif ($ShortBlock == 0) 			{die "Length of block to resolve must be at least 1, currently set at $ShortBlock\n";}
 elsif ($ShortBlock == 1) 			{print "Blocks of Length 1 are automatically resolved, will not resolve further\n";}
 #print "$FileIn\n$DirectoryOut\n$MatField\n$PatField\n",join(" ",@ChildFields),"\n$ShortBlock\n";
 
-my ($FileOut, undef, undef) = fileparse ($FileIn, qr/\.[^.]*/);
+my ($FileOut, undef, $Ext) = fileparse ($FileIn); #, qr/\.[^.]*/);
+$FileOut =~ s/(?:\.[^.]+)+$//;
+#print "$FileOut\n"; exit;
 my $n = 1;
 my $Suff = "";
-while (-f $DirectoryOut."/".$FileOut.$Suff."_State.tsv" and -f $DirectoryOut."/".$FileOut.$Suff."_MIE.tsv" ) # loop till name is found that does not exist, ensure we do not overwrite existing file
-{$Suff = "_$n"; $n++;} # loop till we have a new unique filename
+while (-f $DirectoryOut."/".$FileOut.$Suff."_State.tsv" and -f $DirectoryOut."/".$FileOut.$Suff."_MIE.tsv" )
+{$Suff = "_$n"; $n++;} # loop t	ill we have a new unique filename
 
 print "Assigning Fields:\n";
 print "\tMaternal Field\t$MatField\n\tPaternal Field\t$PatField\n\tChild Fields\t",join("\t",@ChildFields),"\n";
@@ -369,12 +361,12 @@ sub GetExpectedParams
 {
 	my %Hash =
 	(
-	"input" => -1,
-	"output_dir" => -1,
-	"mat_field" => -1,
-	"pat_field" => -1,
-	"child_fields" => -1,
-	"short_block" => -1,
+	input => "",
+	output_dir => "",
+	mat_field => -1,
+	pat_field => -1,
+	child_fields => "",
+	short_block => 5, # optional, default = 5
 	); # to store parameters and values
 	return %Hash;
 }
@@ -392,7 +384,14 @@ sub GetEnteredParams
 		$ARGVs[$n] =~ s/\s+$//; # remove any trailing spaces
 		my ($Key, $Val) = split / /, $ARGVs[$n], 2; # put first element into key, any other elements into val
 		$Key = lc $Key;
-		$Hash{$Key} = $Val; # make a hash entry out of key and val
+		if ($Key eq "child_fields") # special case, may have repeated params
+		{
+			$Hash{$Key} .= $Val; # make a hash entry out of key and val, possible multiple entries
+		}
+		else # all others expect one entry
+		{
+			$Hash{$Key} = $Val; # make a hash entry out of key and val
+		}
 		#print "$Key\t$EnteredParams{$Key}\n" if $Debug;
 	}
 		#print int(keys %Hash),"\n" if $Debug;
@@ -415,6 +414,25 @@ sub TestParameters
 	}
 	if (int keys %EnteredParams > 6) {die "There are too many parameter in the arguments";}
 	if ($ArgErrors) {die "$ArgErrors detected in input parameters";}
+}
+
+sub SetColours
+{
+	my %Colours;
+	$Colours{Red} = "255,0,0"; # red
+	$Colours{Blue} = "0,0,255"; # blue
+	$Colours{Green} = "0,255,0"; # green
+	$Colours{Purple} = "255,0,255"; # purple
+	$Colours{PaleBlue} = "150,150,255"; # pale blue
+	$Colours{Grey} = "150,150,150"; # grey
+	$Colours{PaleGrey} = "50,50,50"; # pale grey
+
+	$Colours{SameClr} = $Colours{Red}; # S = red
+	$Colours{DiffClr} = $Colours{Blue}; # D = blue
+	$Colours{UncertClr} = $Colours{Grey}; # U = grey
+	$Colours{GapClr} = $Colours{Purple}; # G = purple
+
+	return %Colours;
 }
 
 sub CheckForMIEs
@@ -506,10 +524,10 @@ sub SaveRecAsMIEBed
     my $RGB;
     #print join("\t",@$Array),"\n"; exit;
 	my $Name;
-	if ($$Array[12] == 1 or $$Array[13] == 1) {$RGB = $Red; $Name = 1;}
-	elsif ($$Array[12] == 2 or $$Array[13] == 2) {$RGB = $Blue; $Name = 2;}
-	elsif ($$Array[12] == 3 or $$Array[13] == 3) {$RGB = $Green; $Name = 3;}
-	else                       {$RGB = $UncertClr; $Name = 4;}
+	if ($$Array[12] == 1 or $$Array[13] == 1) {$RGB = $Colours{Red}; $Name = 1;}
+	elsif ($$Array[12] == 2 or $$Array[13] == 2) {$RGB = $Colours{Blue}; $Name = 2;}
+	elsif ($$Array[12] == 3 or $$Array[13] == 3) {$RGB = $Colours{Green}; $Name = 3;}
+	else                       {$RGB = $Colours{UncertClr}; $Name = 4;}
 
 	print $FH $$Array[1],"\t",$$Array[2],"\t",$$Array[3],"\t",$$Array[4],"\t",$Name,"\t";
 	print $FH "+","\t",$$Array[2],"\t",$$Array[3],"\t",$RGB,"\n";
@@ -520,7 +538,9 @@ sub AnalyseState1
 	my $Fields = shift; # ptr to modified testvariant fields
 	my $Use = 0; # whether to use for state analysis
 	my $Combo = 0; # counter for which field to enter data for, increments by 2 to allow 2 fields per combination, one maternal, one paternal
-
+	#print "Nr Fields: ",int(@$Fields),"\nNr Children: ",$NrChildren,"\n";
+	#$$Fields[int(@$Fields)-1+($NrChildren*2)] = "";
+	#print "Nr Fields: ",int(@$Fields),"\n"; exit;
 	if ($$Fields[$MatField] eq "01" and $$Fields[$PatField] eq "00") # allele 1 is unique for mother
 	{
 		my $Combo = 0; # counter for which field to enter data for, increments by 2 to allow 2 fields per combination, one maternal, one paternal
@@ -529,16 +549,21 @@ sub AnalyseState1
 			for my $Ch2 ($Ch1+1..$NrChildren-1) # loop for second child in pair
 			{
 				if (($$Fields[$ChildFields[$Ch1]] =~ /1/ and $$Fields[$ChildFields[$Ch2]] =~ /1/) or
-				($$Fields[$ChildFields[$Ch1]] eq "00" and $$Fields[$ChildFields[$Ch2]] eq "00")) # two kids same genotype, autosomes only for now
+					($$Fields[$ChildFields[$Ch1]] eq "00" and $$Fields[$ChildFields[$Ch2]] eq "00")) # two kids same genotype, autosomes only for now
 				{
-				$$Fields[$FirstNewField+$Combo] = "S"; # kids have same genoytope from mother
-				$Use = 1;
+					$$Fields[$FirstNewField+$Combo] = "S"; # kids have same genoytope from mother
+					$Use = 1;
 				}
 				elsif ($$Fields[$ChildFields[$Ch1]] !~ /N/ and $$Fields[$ChildFields[$Ch2]] !~ /N/) # only want fully called
 				{
-				$$Fields[$FirstNewField+$Combo] = "D"; # kids have diff genoytope from mother
-				$Use = 1;
+					$$Fields[$FirstNewField+$Combo] = "D"; # kids have diff genoytope from mother
+					$Use = 1;
 				}
+				else
+				{
+					$$Fields[$FirstNewField+$Combo] = "N"; # not informative
+				}
+				$$Fields[$FirstNewField+$Combo+1] = "N"; # not informative for other parent
 				$Combo += 2; # go to next set of fields for next child
 			}
 		}
@@ -551,7 +576,7 @@ sub AnalyseState1
 			for my $Ch2 ($Ch1+1..$NrChildren-1)
 			{
 				if (($$Fields[$ChildFields[$Ch1]] =~ /0/ and $$Fields[$ChildFields[$Ch2]] =~ /0/) or
-				($$Fields[$ChildFields[$Ch1]] eq "11" and $$Fields[$ChildFields[$Ch2]] eq "11")) # two kids same genotype, autosomes only for now
+					($$Fields[$ChildFields[$Ch1]] eq "11" and $$Fields[$ChildFields[$Ch2]] eq "11")) # two kids same genotype, autosomes only for now
 				{
 					$$Fields[$FirstNewField+$Combo] = "S"; # kids have same genoytope from mother
 					$Use = 1;
@@ -561,6 +586,11 @@ sub AnalyseState1
 					$$Fields[$FirstNewField+$Combo] = "D"; # kids have diff genoytope from mother
 					$Use = 1;
 				}
+				else
+				{
+					$$Fields[$FirstNewField+$Combo] = "N"; # not informative
+				}
+				$$Fields[$FirstNewField+$Combo+1] = "N"; # not informative for other parent
 				$Combo += 2;
 			}
 		}
@@ -573,7 +603,7 @@ sub AnalyseState1
 			for my $Ch2 ($Ch1+1..$NrChildren-1)
 			{
 				if (($$Fields[$ChildFields[$Ch1]] =~ /1/ and $$Fields[$ChildFields[$Ch2]] =~ /1/) or
-				($$Fields[$ChildFields[$Ch1]] eq "00" and $$Fields[$ChildFields[$Ch2]] eq "00")) # two kids same genotype, autosomes only for now
+					($$Fields[$ChildFields[$Ch1]] eq "00" and $$Fields[$ChildFields[$Ch2]] eq "00")) # two kids same genotype, autosomes only for now
 				{
 					$$Fields[$FirstNewField+$Combo+1] = "S"; # kids have same genoytope from father
 					$Use = 1;
@@ -583,6 +613,11 @@ sub AnalyseState1
 					$$Fields[$FirstNewField+$Combo+1] = "D"; # kids have diff genoytope from father
 					$Use = 1;
 				}
+				else
+				{
+					$$Fields[$FirstNewField+$Combo+1] = "N"; # not informative
+				}
+				$$Fields[$FirstNewField+$Combo] = "N"; # not informative for other parent
 				$Combo += 2;
 			}
 		}
@@ -595,7 +630,7 @@ sub AnalyseState1
 			for my $Ch2 ($Ch1+1..$NrChildren-1)
 			{
 				if (($$Fields[$ChildFields[$Ch1]] =~ /0/ and $$Fields[$ChildFields[$Ch2]] =~ /0/) or
-				($$Fields[$ChildFields[$Ch1]] eq "11" and $$Fields[$ChildFields[$Ch2]] eq "11")) # two kids same genotype, autosomes only for now
+					($$Fields[$ChildFields[$Ch1]] eq "11" and $$Fields[$ChildFields[$Ch2]] eq "11")) # two kids same genotype, autosomes only for now
 				{
 					$$Fields[$FirstNewField+$Combo+1] = "S"; # kids have same genoytope from father
 					$Use = 1;
@@ -605,6 +640,11 @@ sub AnalyseState1
 					$$Fields[$FirstNewField+$Combo+1] = "D"; # kids have diff genoytope from father
 					$Use = 1;
 				}
+				else
+				{
+					$$Fields[$FirstNewField+$Combo+1] = "N"; # not informative
+				}
+				$$Fields[$FirstNewField+$Combo] = "N"; # not informative for other parent
 				$Combo += 2;
 			}
 		}
@@ -617,6 +657,7 @@ sub AnalyseState2
 	my $Fields = shift; # ptr to testvariant fields
 	my $Use = 0; # whether to use for state analysis
 	my $Combo = 0; # counter for which field to enter data for, increments by 2 to allow 2 fields per combination, one maternal, one paternal
+	#$$Fields[int(@$Fields)-1+($NrChildren*2)] = "";
 
 	for my $Ch1 (0..$NrChildren-2) # loop for first child in pair
 	{
@@ -628,6 +669,11 @@ sub AnalyseState2
 				$$Fields[$FirstNewField+$Combo] = "S"; # kids have same genoytope from mother, and
 				$$Fields[$FirstNewField+$Combo+1] = "S"; # kids have same genoytope from father
 				$Use = 1;
+			}
+			else
+			{
+				$$Fields[$FirstNewField+$Combo] = "N"; # not informative
+				$$Fields[$FirstNewField+$Combo+1] = "N"; # not informative
 			}
 			$Combo += 2; # go to next set of fields for next child
 		}
@@ -671,9 +717,9 @@ sub SaveMIEBins
 		{
 			foreach my $Bin (sort {$a <=> $b} keys %{$$P{$Chr}})
 			{
-				if    ($$P{$Chr}{$Bin} < $LTail) {$RGB = $PaleBlue;} # low MIE bins
-				elsif ($$P{$Chr}{$Bin} > $RTail) {$RGB = $Blue;} # high MIE bins
-				else  {$RGB = $UncertClr;} # remainder
+				if    ($$P{$Chr}{$Bin} < $LTail) {$RGB = $Colours{PaleBlue};} # low MIE bins
+				elsif ($$P{$Chr}{$Bin} > $RTail) {$RGB = $Colours{Blue};} # high MIE bins
+				else  {$RGB = $Colours{UncertClr};} # remainder
 				print $FH $Chr,"\t",$Bin*$MIEBlockWindow,"\t",($Bin+1)*$MIEBlockWindow,"\t\t",$MIE_Blocks{$Chr}{$Bin},"\t";
 				print $FH "+","\t",$Bin*$MIEBlockWindow,"\t",($Bin+1)*$MIEBlockWindow,"\t",$RGB,"\n";
 			}
@@ -690,9 +736,9 @@ sub ConcatenateVariants
     my $Nr = -1;
     foreach my $Entry (@$ArrayIn)
     {
-		if ($$Entry[$StateFieldNr])  # entry present for chilren for parent genome represented by field $StateFieldNr
+		if ($$Entry[$StateFieldNr] ne "N")  # S or D entry present for chilren for parent genome represented by field $StateFieldNr
 		{
-			if ($Nr == -1) # first record with an entry for this field
+			if ($Nr == -1)
 			{
 				$ArrayOut[++$Nr] = NewStateRecord (); # increment counter and attached record
 				LoadStateRecord ($ArrayOut[$Nr], $Entry, $StateFieldNr);
@@ -758,11 +804,11 @@ sub SaveStateBlocksAsBed
     {
 		my $P = $Entry;
 		my $RGB;
-		if ($P->{State} eq "S")    {$RGB = $SameClr;}
-		elsif ($P->{State} eq "D") {$RGB = $DiffClr;}
-		elsif ($P->{State} eq "U") {$RGB = $UncertClr;}
-		elsif ($P->{State} eq "G") {$RGB = $GapClr;}
-		else 					   {$RGB = $PaleGrey;}
+		if ($P->{State} eq "S")    {$RGB = $Colours{SameClr};}
+		elsif ($P->{State} eq "D") {$RGB = $Colours{DiffClr};}
+		elsif ($P->{State} eq "U") {$RGB = $Colours{UncertClr};}
+		elsif ($P->{State} eq "G") {$RGB = $Colours{GapClr};}
+		else 					   {$RGB = $Colours{PaleGrey};}
 
 		print $FH $P->{Chr},"\t",$P->{Begin},"\t",$P->{End},"\t",$P->{State},"\t",$P->{Records},"\t";
 		print $FH "+","\t",$P->{Begin},"\t",$P->{End},"\t",$RGB,"\n";
