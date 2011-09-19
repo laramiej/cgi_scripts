@@ -173,15 +173,6 @@ foreach my $Chr (@ChrNames)
     $Vars{$Chr} = [];  # set up array for each chr, as hash
     $MIE_Blocks{$Chr} = {};  # set up hash for each chr, as hash
 }
-my %States; # hash to store state block records in an array for each chr
-foreach my $Chr (@ChrNames)
-{
-    next if $Chr eq "chrX" or $Chr eq "chrY" or $Chr eq "chrM"; # not processing these yet
-    $States{$Chr} = [];  # set up ptr to array for each chr, as hash
-    #print "$Chr\t$States{$Chr}\n" if $Chr eq "chr1";
-    #print int($States{$Chr}),"\n" if $Chr eq "chr1";
-    #print $States{$Chr}[0],"\n" if $Chr eq "chr1";
-}
 
 ######## Process Test Variants ########
 # Takes first and second nominated columns in Args as maternal, paternal
@@ -197,6 +188,13 @@ foreach my $Chr (@ChrNames)
 # ..
 # col n!-1 states whether childn-1 and childn are same (S) or diff (D) for an informative maternally derived allele
 # col n! states whether childn-1 and childn are same (S) or diff (D) for an informative paternally derived allele
+
+my %States; # hash to store state block records in an array for each chr
+foreach my $Chr (@ChrNames)
+{
+    next if $Chr eq "chrX" or $Chr eq "chrY" or $Chr eq "chrM"; # not processing these yet
+    $States{$Chr} = [];  # set up ptr to array for each chr, as hash
+}
 
 print "\nProcessing MIEs and States....\n";
 my $LastFieldIn = (() = $ColHeader =~ /\t/g); # get count of fields in testvariants output
@@ -451,6 +449,10 @@ sub CheckForMIEs
 					$$Fields[$FirstNewField+$n] = 1; # MIE in child n
 					$MIE_Flag = 1;
 				}
+				else
+				{
+					$$Fields[$FirstNewField+$n] = 0; # no MIE in child n
+				}
 			}
 		}
 		elsif ($$Fields[$MatField] eq "11") # parents both 11, kids must be 11
@@ -461,6 +463,10 @@ sub CheckForMIEs
 				{
 					$$Fields[$FirstNewField+$n] = 1; # MIE in child n
 					$MIE_Flag = 1;
+				}
+				else
+				{
+					$$Fields[$FirstNewField+$n] = 0; # no MIE in child n
 				}
 			}
 		}
@@ -479,6 +485,10 @@ sub CheckForMIEs
 				$$Fields[$FirstNewField+$n] = 2; # MIE in child n
 				$MIE_Flag = 1;
 			}
+			else
+			{
+				$$Fields[$FirstNewField+$n] = 0; # no MIE in child n
+			}
 		}
 	}
 	elsif (($$Fields[$MatField] eq "00" and $$Fields[$PatField] eq "01") or
@@ -492,6 +502,10 @@ sub CheckForMIEs
 					$$Fields[$FirstNewField+$n] = 3; # MIE in child n
 					$MIE_Flag = 1;
 				}
+				else
+				{
+					$$Fields[$FirstNewField+$n] = 0; # no MIE in child n
+				}
 			}
 	}
 	elsif (($$Fields[$MatField] eq "11" and $$Fields[$PatField] eq "01") or
@@ -504,6 +518,10 @@ sub CheckForMIEs
 			{
 				$$Fields[$FirstNewField+$n] = 3; # MIE in child n
 				$MIE_Flag = 1;
+			}
+			else
+			{
+				$$Fields[$FirstNewField+$n] = 0; # no MIE in child n
 			}
 		}
     }
@@ -533,7 +551,7 @@ sub SaveRecAsMIEBed
 	print $FH "+","\t",$$Array[2],"\t",$$Array[3],"\t",$RGB,"\n";
 }
 
-sub AnalyseState1
+sub AnalyseState1 # parents 00 01 or 00 10 or 01 00 or 01 11 or 11 01 or 11 10
 {
 	my $Fields = shift; # ptr to modified testvariant fields
 	my $Use = 0; # whether to use for state analysis
@@ -561,9 +579,9 @@ sub AnalyseState1
 				}
 				else
 				{
-					$$Fields[$FirstNewField+$Combo] = "N"; # not informative
+					$$Fields[$FirstNewField+$Combo] = "N"; # not informative genotype from mother
 				}
-				$$Fields[$FirstNewField+$Combo+1] = "N"; # not informative for other parent
+				$$Fields[$FirstNewField+$Combo+1] = "N"; # not informative genotype from father
 				$Combo += 2; # go to next set of fields for next child
 			}
 		}
@@ -588,9 +606,9 @@ sub AnalyseState1
 				}
 				else
 				{
-					$$Fields[$FirstNewField+$Combo] = "N"; # not informative
+					$$Fields[$FirstNewField+$Combo] = "N"; # # not informative genotype from mother
 				}
-				$$Fields[$FirstNewField+$Combo+1] = "N"; # not informative for other parent
+				$$Fields[$FirstNewField+$Combo+1] = "N"; # not informative genotype from father
 				$Combo += 2;
 			}
 		}
@@ -615,9 +633,9 @@ sub AnalyseState1
 				}
 				else
 				{
-					$$Fields[$FirstNewField+$Combo+1] = "N"; # not informative
+					$$Fields[$FirstNewField+$Combo+1] = "N"; # not informative genotype from father
 				}
-				$$Fields[$FirstNewField+$Combo] = "N"; # not informative for other parent
+				$$Fields[$FirstNewField+$Combo] = "N"; # not informative genotype from mother
 				$Combo += 2;
 			}
 		}
@@ -642,9 +660,9 @@ sub AnalyseState1
 				}
 				else
 				{
-					$$Fields[$FirstNewField+$Combo+1] = "N"; # not informative
+					$$Fields[$FirstNewField+$Combo+1] = "N"; # not informative genotype from father
 				}
-				$$Fields[$FirstNewField+$Combo] = "N"; # not informative for other parent
+				$$Fields[$FirstNewField+$Combo] = "N"; # not informative genotype from mother
 				$Combo += 2;
 			}
 		}
@@ -652,7 +670,7 @@ sub AnalyseState1
 	return ($Use, $Fields)
 }
 
-sub AnalyseState2
+sub AnalyseState2 # parents 01 01
 {
 	my $Fields = shift; # ptr to testvariant fields
 	my $Use = 0; # whether to use for state analysis
@@ -668,6 +686,13 @@ sub AnalyseState2
 			{
 				$$Fields[$FirstNewField+$Combo] = "S"; # kids have same genoytope from mother, and
 				$$Fields[$FirstNewField+$Combo+1] = "S"; # kids have same genoytope from father
+				$Use = 1;
+			}
+			elsif (($$Fields[$ChildFields[$Ch1]] eq "00" and $$Fields[$ChildFields[$Ch2]] eq "11") or
+				($$Fields[$ChildFields[$Ch1]] eq "11" and $$Fields[$ChildFields[$Ch2]] eq "00"))# two kids same genotype, autosomes only for now
+			{
+				$$Fields[$FirstNewField+$Combo] = "D"; # kids have different genoytope from mother, and
+				$$Fields[$FirstNewField+$Combo+1] = "D"; # kids have different genoytope from father
 				$Use = 1;
 			}
 			else
