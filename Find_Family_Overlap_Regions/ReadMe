@@ -1,0 +1,38 @@
+Find_Family_Overlap_Regions
+
+Determines which regions of a set of child genomes have been inherited in common.
+Takes in to account mode of inheritance and whether the children share (afffected) or don't share (unaffected).
+
+input from child comparison state files from Family_Inheritqnce_State_Analysis.pl
+eg *_Ch1_Ch2_Pat_States_GT_5.tsv
+Each child must be entered as affected or unaffected
+Regions shared by affected siblings but not shared by unaffected siblings will be outputted
+user can select whether to output a header.
+Header structure is the same as for CompleteGenomics headers.
+
+The mode of inheritance determines which files are used.
+Files which do not match mode of inheritance are ignored.
+So eg a set of files can be inputted and the mode of inheritance varied.
+
+Format:
+perl Family_Overlap_Region_Finder \
+--Input_Mat input_mat_state_file \ [multiple allowed]
+--Input_Pat input_mat_state_file \ [multiple allowed]
+--output_dir output_dir \
+--Header [optional]
+--Affected nr [nr] \ [optional but one of Affected and Unaffected must be present]
+--Unaffected nr [nr] \ [optional as above]
+--Inheritance_Mode [maternal_dominant|paternal_dominant|recessive]
+eg
+perl /hoard/home/rtearle/perl/Family_Overlap_Region_Finder_0_1_4.pl \
+--Input_Mat /Comparisons/Quartet_testvariants-chr20-22_4_Ch1_Ch2_Mat_States_GT_5.tsv \
+--Input_Mat /Comparisons/Quartet_testvariants-chr20-22_4_Ch1_Ch3_Mat_States_GT_5.tsv \
+--Input_Pat /Comparisons/Quartet_testvariants-chr20-22_4_Ch1_Ch2_Pat_States_GT_5.tsv \
+--Input_Pat /Comparisons/Quartet_testvariants-chr20-22_4_Ch1_Ch3_Pat_States_GT_5.tsv \
+--Output_Dir /data/Family_Analysis/Comparisons/ \
+--Header
+--Inheritance_Mode recessive
+--Affected 1 2
+--Unaffected 3
+
+Rick Tearle 2011
