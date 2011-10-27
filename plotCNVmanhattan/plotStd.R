@@ -1,4 +1,4 @@
-source('plotCNVmanhattan.R')
+source('CNVmanhattan.R')
 
 cnvDetails<-read.table("cnvTumorDetailsBeta-XXX-ASM.tsv", header=T, sep="\t", na.string="N")
 
