@@ -243,7 +243,7 @@ sub ExtractFields # expects a gene file rec, strips out file specific fields, ge
 	# codingRegionKnown	impact	nucleotidePos	proteinPos	annotationRefSequence
 	# sampleSequence	genomeRefSequence
 
-	if ($Rec =~ /snp|ins|del|sub/ and $Rec =~ /CDS|ACCEPTOR|DONOR|SPAN/) # only take recs which can affect the CDS
+	if ($Rec =~ /snp|ins|del|sub/ and $Rec =~ /CDS|ACCEPTOR|DONOR|SPAN|EXON/) # only take recs which can affect the CDS
 	{
 		chomp $Rec; # remove return
 		$Rec =~ s/^\d+\t\d+\t(all|1|2)\t//; # remove first three fields: index locus allele

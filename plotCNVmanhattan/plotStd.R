@@ -1,12 +1,6 @@
-source('plotCNVmanhattan.R')
-ploidy<-read.table("/Users/gtyrelle/FAS/projects/customer/emc_dinjens/cnvTumorDetailsBeta-GS000004997-ASM.tsv", header=T, sep="\t", na.string="N", nrows=10, comment.char="")
-#change the number of rows read (nrows) to capture all of the MEAN_LEVEL fields
-ploidy<-ploidy[-(1:4),]
-names(ploidy)<-c("ploidy","relativeCvg")
-ploidy$ploidy<-0:5 #change this to reflect how many levels are in the header
-ploidy$relativeCvg<-as.numeric(as.character(ploidy$relativeCvg))
+source('CNVmanhattan.R')
 
-cnvDetails<-read.table("/Users/gtyrelle/FAS/projects/customer/emc_dinjens/cnvTumorDetailsBeta-GS000004997-ASM.tsv", header=T, sep="\t", na.string="N")
+cnvDetails<-read.table("cnvTumorDetailsBeta-XXX-ASM.tsv", header=T, sep="\t", na.string="N")
 
-create.mht.plot(cnvDetails, cell.type="T", plot.name="testing", max.ploidy=10, chr=NA, title="testing title", beg=NA, end=NA, ploidy=ploidy, plot.type="pdf")
+create.mht.plot(cnvDetails, cell.type="N", plot.name="cnvnormal", max.ploidy=10, chr=NA, title="CNV Manhattan for Normal", beg=NA, end=NA, ploidy=, plot.type="pdf")
 
